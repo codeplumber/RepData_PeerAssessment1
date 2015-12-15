@@ -7,7 +7,10 @@ output:
 
 
 ## Loading and preprocessing the data
-
+```{r}
+activity <- read.csv("activity.csv")
+str(activity)
+```
 
 
 ## What is mean total number of steps taken per day?
@@ -19,7 +22,12 @@ output:
 
 
 ## Imputing missing values
-
-
+### Rows with NAs
+```{r}
+library(dplyr)
+activityWithNa <- filter(activity, is.na(steps) | is.na(date) | is.na(interval))
+numberOfRowsWithNa <- dim(activityWithNa)[1]
+```
+There are `r numberOfRowsWithNa` rows with NA values.
 
 ## Are there differences in activity patterns between weekdays and weekends?
