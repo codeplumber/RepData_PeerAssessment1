@@ -4,7 +4,15 @@ output:
   html_document:
     keep_md: true
 ---
+## Loading libraries
+```{r loading_libraries}
+library(plyr)
+library(dplyr)
+```
 
+```{r}
+knitr::opts_chunk$set(fig.path = 'figure/')
+```
 
 ## Loading and preprocessing the data
 ```{r}
@@ -12,22 +20,69 @@ activity <- read.csv("activity.csv")
 str(activity)
 ```
 
-
 ## What is mean total number of steps taken per day?
+### Histogram of the total number of steps taken each day
+```{r histogram}
+activity_by_date <- group_by(activity, date)
+activity_sum_by_date <- summarise(activity_by_date, daily_steps = sum(steps, na.rm = TRUE))
+hist(activity_sum_by_date$daily_steps, breaks = 10, xlab = "Daily Steps", main = "Histogram of Daily Steps")
+```
 
+### Mean and median total number of steps taken per day
+```{r}
+mean_steps <- mean(activity_sum_by_date$daily_steps)
+median_steps <- median(activity_sum_by_date$daily_steps)
+```
+The mean steps taken per day are `r mean_steps`.
 
+The median steps taken per day are `r median_steps`.
 
 ## What is the average daily activity pattern?
 
+### Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+```{r daily_activity_pattern}
+activity_by_interval <- group_by(activity, interval)
+activity_mean_by_interval <- summarise(activity_by_interval, mean_steps = mean(steps, na.rm = TRUE))
+plot(activity_mean_by_interval$interval, activity_mean_by_interval$mean_steps, type = "l", xlab = "Interval", ylab = "Mean Steps", main = "Average steps during a day")
+```
 
+### Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+```{r}
+max_steps_interval <- filter(activity_mean_by_interval, mean_steps == max(mean_steps))
+max_interval <- max_steps_interval$interval[1]
+max_steps <- max_steps_interval$mean_steps[1]
+```
+The 5-minute interval `r max_interval` has the maximum average steps of `r max_steps` steps.
 
 ## Imputing missing values
 ### Rows with NAs
 ```{r}
-library(dplyr)
 activityWithNa <- filter(activity, is.na(steps) | is.na(date) | is.na(interval))
 numberOfRowsWithNa <- dim(activityWithNa)[1]
 ```
 There are `r numberOfRowsWithNa` rows with NA values.
+
+### Filling missing values
+Let's assume that we are very strict, so we set all NA values to 0.
+```{r}
+activity_imputed <- mutate(activity, steps_imputed = steps %>% mapvalues(NA, 0))
+head(activity_imputed)
+```
+
+### Histogram with imputed values
+```{r histogram_imputed}
+activity_imputed_by_date <- group_by(activity_imputed, date)
+activity_imputed_sum_by_date <- summarise(activity_imputed_by_date, daily_steps = sum(steps_imputed))
+hist(activity_imputed_sum_by_date$daily_steps, breaks = 10, xlab = "Daily Steps Imputed", main = "Histogram of Daily Steps Imputed")
+```
+
+### Mean and median total number of steps taken per day
+```{r}
+mean_steps_imputed <- mean(activity_imputed_sum_by_date$daily_steps)
+median_steps_imputed <- median(activity_imputed_sum_by_date$daily_steps)
+```
+The mean steps taken per day are `r mean_steps_imputed` (without imputing values it was `r mean_steps`).
+
+The median steps taken per day are `r median_steps_imputed` (without imputing values it was `r median_steps`).
 
 ## Are there differences in activity patterns between weekdays and weekends?
