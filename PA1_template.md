@@ -24,6 +24,10 @@ library(dplyr)
 ##     intersect, setdiff, setequal, union
 ```
 
+```r
+library(ggplot2)
+```
+
 
 ```r
 knitr::opts_chunk$set(fig.path = 'figure/')
@@ -133,3 +137,30 @@ The mean steps taken per day are 9354.2295082 (without imputing values it was 93
 The median steps taken per day are 1.0395\times 10^{4} (without imputing values it was 10395).
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Add a real date column and calculate if the date is a weekend day or a weekday day.
+
+```r
+activity_imputed_date <- mutate(activity_imputed, date_Date = as.Date(date), weekday = weekdays(date_Date, abbreviate = TRUE), weekend = factor(1 * (weekday %in% c("Sa", "So")), labels = c("weekday", "weekend")))
+head(activity_imputed_date)
+```
+
+```
+##   steps       date interval steps_imputed  date_Date weekday weekend
+## 1    NA 2012-10-01        0             0 2012-10-01      Mo weekday
+## 2    NA 2012-10-01        5             0 2012-10-01      Mo weekday
+## 3    NA 2012-10-01       10             0 2012-10-01      Mo weekday
+## 4    NA 2012-10-01       15             0 2012-10-01      Mo weekday
+## 5    NA 2012-10-01       20             0 2012-10-01      Mo weekday
+## 6    NA 2012-10-01       25             0 2012-10-01      Mo weekday
+```
+
+Now look at the difference between weekdays and weekend.
+
+```r
+activity_imputed_by_interval <- group_by(activity_imputed_date, interval, weekend)
+activity_imputed_mean_by_interval <- summarise(activity_imputed_by_interval, mean_steps = mean(steps, na.rm = TRUE))
+g <- ggplot(activity_imputed_mean_by_interval, aes(interval, mean_steps))
+g + geom_line() + facet_grid(weekend ~ .)
+```
+
+![](figure/weekend_pattern-1.png) 
